@@ -18,7 +18,7 @@ public class CliRandomizer {
 
     private static boolean performDirectRandomization(String settingsFilePath, String sourceRomFilePath,
                                                       String destinationRomFilePath, boolean saveAsDirectory,
-                                                      String updateFilePath, boolean saveLog) {
+                                                      String updateFilePath, boolean saveLog, String seedString) {
         // borrowed directly from NewRandomizerGUI()
         RomHandler.Factory[] checkHandlers = new RomHandler.Factory[] {
                 new Gen1RomHandler.Factory(),
@@ -93,7 +93,12 @@ public class CliRandomizer {
                     String filename = fh.getAbsolutePath();
 
                     Randomizer randomizer = new Randomizer(settings, romHandler, bundle, saveAsDirectory);
-                    randomizer.randomize(filename, verboseLog);
+                    if (seedString != null) {
+                        long seed = Long.parseLong(seedString);
+                        randomizer.randomize(filename, verboseLog, seed);
+                    } else {
+                        randomizer.randomize(filename, verboseLog);
+                    }
                     verboseLog.close();
                     byte[] out = baos.toByteArray();
                     if (saveLog) {
@@ -138,6 +143,7 @@ public class CliRandomizer {
         boolean saveAsDirectory = false;
         String updateFilePath = null;
         boolean saveLog = false;
+        String seedString = null;
 
         List<String> allowedFlags = Arrays.asList("-i", "-o", "-s", "-d", "-u", "-l", "--help");
         for (int i = 0; i < args.length; i++) {
@@ -160,6 +166,9 @@ public class CliRandomizer {
                         break;
                     case "-l":
                         saveLog = true;
+                        break;
+                    case "-e":
+                        seedString = args[i+1];
                         break;
                     case "--help":
                         printUsage();
@@ -204,7 +213,8 @@ public class CliRandomizer {
                 outputRomFilePath,
                 saveAsDirectory,
                 updateFilePath,
-                saveLog
+                saveLog,
+                seedString
         );
         if (!processResult) {
             printError("Randomization failed");
